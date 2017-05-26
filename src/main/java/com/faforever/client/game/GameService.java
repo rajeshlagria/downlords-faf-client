@@ -1,6 +1,7 @@
 package com.faforever.client.game;
 
 import com.faforever.client.config.ClientProperties;
+import com.faforever.client.connectivity.ConnectivityService;
 import com.faforever.client.fa.ForgedAllianceService;
 import com.faforever.client.fa.RatingMode;
 import com.faforever.client.fa.relay.event.RehostRequestEvent;
@@ -24,6 +25,7 @@ import com.faforever.client.player.Player;
 import com.faforever.client.player.PlayerService;
 import com.faforever.client.preferences.PreferencesService;
 import com.faforever.client.rankedmatch.MatchmakerMessage;
+import com.faforever.client.relay.LocalRelayServer;
 import com.faforever.client.remote.FafService;
 import com.faforever.client.remote.domain.GameInfoMessage;
 import com.faforever.client.remote.domain.GameLaunchMessage;
@@ -91,6 +93,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public class GameService {
 
   private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final boolean ICE_ADAPTER_ENABLED = false;
 
   @VisibleForTesting
   final BooleanProperty gameRunning;
@@ -120,6 +123,8 @@ public class GameService {
   private final ModService modService;
   private final PlatformService platformService;
   private final String faWindowTitle;
+  private final ConnectivityService connectivityService;
+  private final LocalRelayServer localRelayServer;
   private final ExternalReplayInfoGenerator externalReplayInfoGenerator;
 
   //TODO: circular reference
@@ -135,12 +140,13 @@ public class GameService {
 
   @Inject
   public GameService(ClientProperties clientProperties, FafService fafService,
-                     ForgedAllianceService forgedAllianceService, MapService mapService,
-                     PreferencesService preferencesService, GameUpdater gameUpdater,
-                     NotificationService notificationService, I18n i18n, Executor executor,
-                     PlayerService playerService, ReportingService reportingService, EventBus eventBus,
-                     IceAdapter iceAdapter, ModService modService, PlatformService platformService,
-                     ExternalReplayInfoGenerator externalReplayInfoGenerator) {
+                         ForgedAllianceService forgedAllianceService, MapService mapService,
+                         PreferencesService preferencesService, GameUpdater gameUpdater,
+                         NotificationService notificationService, I18n i18n, Executor executor,
+                         PlayerService playerService, ReportingService reportingService, EventBus eventBus,
+                         IceAdapter iceAdapter, ModService modService, PlatformService platformService,
+                         ConnectivityService connectivityService, LocalRelayServer localRelayServer,ExternalReplayInfoGenerator externalReplayInfoGenerator) {
+
     this.fafService = fafService;
     this.forgedAllianceService = forgedAllianceService;
     this.mapService = mapService;
@@ -157,6 +163,8 @@ public class GameService {
     this.platformService = platformService;
 
     faWindowTitle = clientProperties.getForgedAlliance().getWindowTitle();
+    this.connectivityService = connectivityService;
+    this.localRelayServer = localRelayServer;
     this.externalReplayInfoGenerator = externalReplayInfoGenerator;
     uidToGameInfoBean = FXCollections.observableMap(new ConcurrentHashMap<>());
     searching1v1 = new SimpleBooleanProperty();
@@ -198,12 +206,12 @@ public class GameService {
     JavaFxUtil.attachListToMap(games, uidToGameInfoBean);
   }
 
-  
+
   public ReadOnlyBooleanProperty gameRunningProperty() {
     return gameRunning;
   }
 
-  
+
   public CompletableFuture<Void> hostGame(NewGameInfo newGameInfo) {
     if (isRunning()) {
       logger.debug("Game is running, ignoring host request");
@@ -214,11 +222,13 @@ public class GameService {
 
     return updateGameIfNecessary(newGameInfo.getFeaturedMod(), null, emptyMap(), newGameInfo.getSimMods())
         .thenCompose(aVoid -> downloadMapIfNecessary(newGameInfo.getMap()))
+        .thenRun(connectivityService::connect)
+        .thenRun(() -> localRelayServer.start(connectivityService))
         .thenCompose(aVoid -> fafService.requestHostGame(newGameInfo))
         .thenAccept(gameLaunchMessage -> startGame(gameLaunchMessage, null, RatingMode.GLOBAL));
   }
 
-  
+
   public CompletableFuture<Void> joinGame(Game game, String password) {
     if (isRunning()) {
       logger.debug("Game is running, ignoring join request");
@@ -242,6 +252,8 @@ public class GameService {
           }
         })
         .thenCompose(aVoid -> downloadMapIfNecessary(game.getMapFolderName()))
+        .thenRun(connectivityService::connect)
+        .thenRun(() -> localRelayServer.start(connectivityService))
         .thenCompose(aVoid -> fafService.requestJoinGame(game.getId(), password))
         .thenAccept(gameLaunchMessage -> {
           synchronized (currentGame) {
@@ -268,7 +280,7 @@ public class GameService {
   /**
    * @param path a replay file that is readable by the preferences without any further conversion
    */
-  
+
   public void runWithReplay(Path path, @Nullable Integer replayId, String featuredMod, Integer version, Map<String, Integer> modVersions, Set<String> simMods, String mapName) {
     if (isRunning()) {
       logger.warn("Forged Alliance is already running, not starting replay");
@@ -303,7 +315,7 @@ public class GameService {
     );
   }
 
-  
+
   public CompletableFuture<Void> runWithLiveReplay(URI replayUrl, Integer gameId, String gameType, String mapName) {
     if (isRunning()) {
       logger.warn("Forged Alliance is already running, not starting live replay");
@@ -330,12 +342,12 @@ public class GameService {
     return playerService.getCurrentPlayer().orElseThrow(() -> new IllegalStateException("Player has not been set"));
   }
 
-  
+
   public ObservableList<Game> getGames() {
     return games;
   }
 
-  
+
   public Game getByUid(int uid) {
     Game game = uidToGameInfoBean.get(uid);
     if (game == null) {
@@ -344,12 +356,12 @@ public class GameService {
     return game;
   }
 
-  
+
   public void addOnRankedMatchNotificationListener(Consumer<MatchmakerMessage> listener) {
     fafService.addOnMessageListener(MatchmakerMessage.class, listener);
   }
 
-  
+
   public CompletableFuture<Void> startSearchLadder1v1(Faction faction) {
     if (isRunning()) {
       logger.debug("Game is running, ignoring 1v1 search request");
@@ -362,6 +374,8 @@ public class GameService {
 
     return modService.getFeaturedMod(LADDER_1V1.getTechnicalName())
         .thenAccept(featuredModBean -> updateGameIfNecessary(featuredModBean, null, emptyMap(), emptySet()))
+        .thenRun(connectivityService::connect)
+        .thenRun(() -> localRelayServer.start(connectivityService))
         .thenCompose(aVoid -> fafService.startSearchLadder1v1(faction, port))
         .thenAccept((gameLaunchMessage) -> downloadMapIfNecessary(gameLaunchMessage.getMapname())
             .thenRun(() -> {
@@ -382,7 +396,7 @@ public class GameService {
         });
   }
 
-  
+
   public void stopSearchLadder1v1() {
     if (searching1v1.get()) {
       fafService.stopSearchingRanked();
@@ -390,7 +404,7 @@ public class GameService {
     }
   }
 
-  
+
   public BooleanProperty searching1v1Property() {
     return searching1v1;
   }
@@ -399,7 +413,7 @@ public class GameService {
    * Returns the preferences the player is currently in. Returns {@code null} if not in a preferences.
    */
   @Nullable
-  
+
   public Game getCurrentGame() {
     synchronized (currentGame) {
       return currentGame.get();
@@ -414,7 +428,7 @@ public class GameService {
     return gameUpdater.update(featuredMod, version, featuredModVersions, simModUids);
   }
 
-  
+
   public boolean isGameRunning() {
     synchronized (gameRunning) {
       return gameRunning.get();
@@ -441,12 +455,22 @@ public class GameService {
     replayService.startReplayServer(gameLaunchMessage.getUid())
         .thenCompose(port -> {
           localReplayPort = port;
+          // FIXME clean up when ICE gets enabled
+          if (!ICE_ADAPTER_ENABLED) {
+            return CompletableFuture.completedFuture(0);
+          }
           return iceAdapter.start();
         })
         .thenAccept(adapterPort -> {
+          int port;
+          if (!ICE_ADAPTER_ENABLED) {
+            port = localRelayServer.getPort();
+          } else {
+            port = adapterPort;
+          }
           List<String> args = fixMalformedArgs(gameLaunchMessage.getArgs());
           process = noCatch(() -> forgedAllianceService.startGame(gameLaunchMessage.getUid(), faction, args, ratingMode,
-              adapterPort, localReplayPort, rehostRequested, getCurrentPlayer()));
+              port, localReplayPort, rehostRequested, getCurrentPlayer()));
           setGameRunning(true);
 
           this.ratingMode = ratingMode;
@@ -499,6 +523,7 @@ public class GameService {
 
         synchronized (gameRunning) {
           gameRunning.set(false);
+          localRelayServer.close();
           fafService.notifyGameEnded();
           replayService.stopReplayServer();
           iceAdapter.stop();
