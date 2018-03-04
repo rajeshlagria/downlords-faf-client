@@ -1,6 +1,7 @@
 package com.faforever.client.chat;
 
 import com.faforever.client.audio.AudioService;
+import com.faforever.client.chat.event.FocusChannelTabEvent;
 import com.faforever.client.clan.Clan;
 import com.faforever.client.clan.ClanService;
 import com.faforever.client.clan.ClanTooltipController;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.testfx.util.WaitForAsyncUtils;
 
@@ -60,10 +62,11 @@ import static com.faforever.client.chat.SocialStatus.OTHER;
 import static com.faforever.client.chat.SocialStatus.SELF;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -194,7 +197,7 @@ public class AbstractChatTabControllerTest extends AbstractPlainJavaFxTest {
     instance.onSendMessage();
 
     verify(chatService).sendMessageInBackground(eq(receiver), eq(message));
-    assertThat(instance.messageTextField().getText(), is(emptyString()));
+    assertThat(instance.messageTextField().getText(), isEmptyString());
     assertThat(instance.messageTextField().isDisable(), is(false));
   }
 
@@ -253,7 +256,7 @@ public class AbstractChatTabControllerTest extends AbstractPlainJavaFxTest {
     instance.onSendMessage();
 
     verify(chatService).sendActionInBackground(eq(receiver), eq("is happy"));
-    assertThat(instance.messageTextField().getText(), is(emptyString()));
+    assertTrue(instance.messageTextField().getText().equals(""));
     assertThat(instance.messageTextField().isDisable(), is(false));
   }
 
@@ -273,6 +276,23 @@ public class AbstractChatTabControllerTest extends AbstractPlainJavaFxTest {
     verify(chatService).sendActionInBackground(receiver, "is happy");
     assertThat(instance.messageTextField().getText(), is(message));
     assertThat(instance.messageTextField().isDisable(), is(false));
+  }
+
+  @Test
+  public void testOnSendJoinChannelMessage() {
+    String message = "/join #testChannel";
+    instance.messageTextField().setText(message);
+
+    instance.onSendMessage();
+
+    assertThat(instance.messageTextField().getText(), is(""));
+    assertThat(instance.messageTextField().isDisable(), is(false));
+
+    verify(chatService).joinChannel("#testChannel");
+
+    ArgumentCaptor<FocusChannelTabEvent> focusEventCaptor = ArgumentCaptor.forClass(FocusChannelTabEvent.class);
+    verify(eventBus).post(focusEventCaptor.capture());
+    assertThat(focusEventCaptor.getValue().getChannel(), is("#testChannel"));
   }
 
   @Test
@@ -305,12 +325,26 @@ public class AbstractChatTabControllerTest extends AbstractPlainJavaFxTest {
   }
 
   @Test
-  public void testOpenUrl() throws Exception {
+  public void testOpenHttpUrl() throws Exception {
     String url = "http://www.example.com";
 
     instance.openUrl(url);
 
     verify(platformService).showDocument(url);
+  }
+
+  @Test
+  public void testOpenChannelUrl() throws Exception {
+    String url = "fafJoinChannel://#testChannel";
+
+    instance.openUrl(url);
+
+    ArgumentCaptor<FocusChannelTabEvent> captor = ArgumentCaptor.forClass(FocusChannelTabEvent.class);
+
+    verify(eventBus).post(captor.capture());
+    assertEquals(captor.getValue().getChannel(), "#testChannel");
+
+    verify(chatService).joinChannel("#testChannel");
   }
 
   @Test

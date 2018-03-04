@@ -1,6 +1,7 @@
 package com.faforever.client.chat;
 
 import com.faforever.client.chat.event.ChatMessageEvent;
+import com.faforever.client.chat.event.FocusChannelTabEvent;
 import com.faforever.client.fx.AbstractViewController;
 import com.faforever.client.fx.JavaFxUtil;
 import com.faforever.client.main.event.NavigateEvent;
@@ -213,6 +214,13 @@ public class ChatController extends AbstractViewController<Node> {
       }
     });
     chatService.joinChannel(channelName);
+  }
+
+  @Subscribe
+  public void onFocusChannelTab(FocusChannelTabEvent focusChannelTabEvent) {
+    Platform.runLater(() -> {
+      tabPane.getSelectionModel().select(getOrCreateChannelTab(focusChannelTabEvent.getChannel()).getRoot());
+    });
   }
 
   private void onChatUserLeftChannel(String channelName, String username) {

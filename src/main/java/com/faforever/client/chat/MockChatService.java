@@ -143,6 +143,11 @@ public class MockChatService implements ChatService {
   }
 
   @Override
+  public void removeChannelsListener(MapChangeListener<String, Channel> listener) {
+
+  }
+
+  @Override
   public void removeUsersListener(String channelName, MapChangeListener<String, ChatUser> listener) {
 
   }
@@ -196,6 +201,11 @@ public class MockChatService implements ChatService {
 
   @Override
   public boolean isDefaultChannel(String channelName) {
+    return true;
+  }
+
+  @Override
+  public boolean hasChannel(String channelName) {
     return true;
   }
 

@@ -2,6 +2,7 @@ package com.faforever.client.chat;
 
 import com.faforever.client.audio.AudioService;
 import com.faforever.client.chat.UrlPreviewResolver.Preview;
+import com.faforever.client.chat.event.FocusChannelTabEvent;
 import com.faforever.client.clan.ClanService;
 import com.faforever.client.clan.ClanTooltipController;
 import com.faforever.client.config.ClientProperties;
@@ -122,11 +123,16 @@ public abstract class AbstractChatTabController implements Controller<Tab> {
   private static final String ACTION_PREFIX = "/me ";
   private static final String JOIN_PREFIX = "/join ";
   private static final String WHOIS_PREFIX = "/whois ";
+
   /**
    * Added if a message is what IRC calls an "action".
    */
   private static final String ACTION_CSS_CLASS = "action";
   private static final String MESSAGE_CSS_CLASS = "message";
+
+  private static final Pattern CHANNEL_URL_PATTERN = Pattern.compile("\\QfafJoinChannel://\\E(#[a-z].+)", CASE_INSENSITIVE);
+  private static final Pattern CHAT_CHANNEL_PATTERN = Pattern.compile("#([a-z][^#]+)\\b", CASE_INSENSITIVE);
+
   protected final UserService userService;
   protected final ChatService chatService;
   protected final PlatformService platformService;
@@ -140,11 +146,11 @@ public abstract class AbstractChatTabController implements Controller<Tab> {
   protected final UiService uiService;
   protected final EventBus eventBus;
   protected final WebViewConfigurer webViewConfigurer;
-  protected final ExternalReplayInfoGenerator externalReplayInfoGenerator;
-  protected final ImageUploadService imageUploadService;
-  protected final UrlPreviewResolver urlPreviewResolver;
-  protected final AutoCompletionHelper autoCompletionHelper;
-  protected final ClanService clanService;
+  private final ExternalReplayInfoGenerator externalReplayInfoGenerator;
+  private final ImageUploadService imageUploadService;
+  private final UrlPreviewResolver urlPreviewResolver;
+  private final AutoCompletionHelper autoCompletionHelper;
+  private final ClanService clanService;
   private final CountryFlagService countryFlagService;
 
   /**
@@ -155,6 +161,7 @@ public abstract class AbstractChatTabController implements Controller<Tab> {
   private final ChangeListener<Boolean> resetUnreadMessagesListener;
   private final ReplayService replayService;
   private final Pattern replayUrlPattern;
+
   @VisibleForTesting
   Popup clanInfoPopup;
   private int lastEntryId;
@@ -512,15 +519,26 @@ public abstract class AbstractChatTabController implements Controller<Tab> {
    */
   public void openUrl(String url) {
     Matcher replayUrlMatcher = replayUrlPattern.matcher(url);
-    if (!replayUrlMatcher.matches()) {
-      platformService.showDocument(url);
+    Matcher channelUrlMatcher = CHANNEL_URL_PATTERN.matcher(url);
+
+    if (replayUrlMatcher.matches()) {
+      String replayId = replayUrlMatcher.group(1);
+
+      replayService.findById(Integer.parseInt(replayId))
+          .thenAccept(replay -> Platform.runLater(() -> externalReplayInfoGenerator.showExternalReplayInfo(replay, replayId)));
+
       return;
     }
 
-    String replayId = replayUrlMatcher.group(1);
+    if (channelUrlMatcher.matches()) {
+      String channel = channelUrlMatcher.group(1);
+      chatService.joinChannel(channel);
+      eventBus.post(new FocusChannelTabEvent(channel));
+      return;
+    }
 
-    replayService.findById(Integer.parseInt(replayId))
-        .thenAccept(replay -> Platform.runLater(() -> externalReplayInfoGenerator.showExternalReplayInfo(replay, replayId)));
+
+    platformService.showDocument(url);
   }
 
   /**
@@ -563,8 +581,10 @@ public abstract class AbstractChatTabController implements Controller<Tab> {
     if (text.startsWith(ACTION_PREFIX)) {
       sendAction(messageTextField, text);
     } else if (text.startsWith(JOIN_PREFIX)) {
-      chatService.joinChannel(text.replaceFirst(Pattern.quote(JOIN_PREFIX), ""));
+      String channel = text.replaceFirst(Pattern.quote(JOIN_PREFIX), "");
+      chatService.joinChannel(channel);
       messageTextField.clear();
+      eventBus.post(new FocusChannelTabEvent(channel));
     } else if (text.startsWith(WHOIS_PREFIX)) {
       chatService.whois(text.replaceFirst(Pattern.quote(JOIN_PREFIX), ""));
       messageTextField.clear();
@@ -660,6 +680,7 @@ public abstract class AbstractChatTabController implements Controller<Tab> {
     try (Reader reader = new InputStreamReader(uiService.getThemeFileUrl(CHAT_TEXT).openStream())) {
       String text = htmlEscaper().escape(chatMessage.getMessage()).replace("\\", "\\\\");
       text = convertUrlsToHyperlinks(text);
+      text = convertChannelsToHyperlinks(text);
 
       Matcher matcher = mentionPattern.matcher(text);
       if (matcher.find()) {
@@ -791,6 +812,17 @@ public abstract class AbstractChatTabController implements Controller<Tab> {
 
   protected String convertUrlsToHyperlinks(String text) {
     return (String) engine.executeScript("link('" + text.replace("'", "\\'") + "')");
+  }
+
+  protected String convertChannelsToHyperlinks(String text) {
+    Matcher matcher = CHAT_CHANNEL_PATTERN.matcher(text);
+    String res = text;
+    while (matcher.find()) {
+      String channel = matcher.group(0);
+      res = res.replaceFirst(channel + "\\b", "<a href=\"javascript:void(0);\" onClick=\"chatTab.openUrl('fafJoinChannel://" + channel + "')\">" + channel + "</a>");
+    }
+
+    return res;
   }
 
   private void addToMessageContainer(String html, String containerId) {

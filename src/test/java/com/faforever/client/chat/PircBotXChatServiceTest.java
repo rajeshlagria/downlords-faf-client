@@ -79,6 +79,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -726,6 +727,13 @@ public class PircBotXChatServiceTest extends AbstractPlainJavaFxTest {
   @Test
   public void testIsDefaultChannel() throws Exception {
     assertTrue(instance.isDefaultChannel(DEFAULT_CHANNEL_NAME));
+  }
+
+  @Test
+  public void testHasChannel() {
+    instance.getOrCreateChannel(DEFAULT_CHANNEL_NAME);
+    assertTrue(instance.hasChannel(DEFAULT_CHANNEL_NAME));
+    assertFalse(instance.hasChannel("qwertzuiopasdfghjklyxcvbnm"));
   }
 
   @Test

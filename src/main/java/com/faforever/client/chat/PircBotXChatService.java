@@ -529,6 +529,13 @@ public class PircBotXChatService implements ChatService {
   }
 
   @Override
+  public void removeChannelsListener(MapChangeListener<String, Channel> listener) {
+    synchronized (channels) {
+      channels.removeListener(listener);
+    }
+  }
+
+  @Override
   public void removeUsersListener(String channelName, MapChangeListener<String, ChatUser> listener) {
     getOrCreateChannel(channelName).removeUserListener(listener);
   }
@@ -557,6 +564,13 @@ public class PircBotXChatService implements ChatService {
     noCatch(() -> identifiedLatch.await());
     logger.debug("Joining channel: {}", channelName);
     pircBotX.sendIRC().joinChannel(channelName);
+  }
+
+  @Override
+  public boolean hasChannel(String channelName) {
+    synchronized (channels) {
+      return channels.containsKey(channelName);
+    }
   }
 
   @Override

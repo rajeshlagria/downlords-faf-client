@@ -30,6 +30,8 @@ public interface ChatService {
 
   void addChannelsListener(MapChangeListener<String, Channel> listener);
 
+  void removeChannelsListener(MapChangeListener<String, Channel> listener);
+
   void removeUsersListener(String channelName, MapChangeListener<String, ChatUser> listener);
 
   void leaveChannel(String channelName);
@@ -37,6 +39,8 @@ public interface ChatService {
   CompletableFuture<String> sendActionInBackground(String target, String action);
 
   void joinChannel(String channelName);
+
+  boolean hasChannel(String channelName);
 
   boolean isDefaultChannel(String channelName);
 
