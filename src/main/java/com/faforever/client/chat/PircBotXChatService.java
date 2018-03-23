@@ -32,6 +32,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.concurrent.Task;
 import javafx.scene.paint.Color;
@@ -274,6 +275,7 @@ public class PircBotXChatService implements ChatService {
         logger.debug("Joining all channels: {}", channels);
         channels.keySet().forEach(this::joinChannel);
       }
+      joinSavedAutoChannels();
     }
   }
 
@@ -284,6 +286,15 @@ public class PircBotXChatService implements ChatService {
     }
     autoChannels.forEach(this::joinChannel);
     autoChannelsJoined = true;
+  }
+
+  private void joinSavedAutoChannels() {
+    ObservableList<String> savedAutoChannels = preferencesService.getPreferences().getChat().getAutoJoinChannels();
+    if (savedAutoChannels == null) {
+      return;
+    }
+    logger.debug("Joining user's saved auto channel: {}", savedAutoChannels);
+    savedAutoChannels.forEach(this::joinChannel);
   }
 
   private void onDisconnected() {
