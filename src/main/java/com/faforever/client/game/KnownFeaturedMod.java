@@ -15,7 +15,8 @@ public enum KnownFeaturedMod {
   LADDER_1V1("ladder1v1"),
   COOP("coop"),
   GALACTIC_WAR("gw"),
-  MATCHMAKER("matchmaker");
+  MATCHMAKER("matchmaker"),
+  TUTORIAL("tutorial");
 
   public static final KnownFeaturedMod DEFAULT = FAF;
 

@@ -1,9 +1,9 @@
 faf-client:
   server:
-    host: localhost
+    host: lobby.faforever.com
 
   irc:
-    host: localhost
+    host: irc.faforever.com
 
   vault:
     base-url: http://content.faforever.com
