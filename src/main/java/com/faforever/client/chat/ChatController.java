@@ -71,7 +71,7 @@ public class ChatController extends AbstractViewController<Node> {
   private void onConnected() {
     connectingProgressPane.setVisible(false);
     tabPane.setVisible(true);
-    noOpenTabsContainer.setVisible(false);
+    noOpenTabsContainer.setVisible(tabPane.getTabs().isEmpty());
   }
 
   private void onConnecting() {
@@ -85,8 +85,6 @@ public class ChatController extends AbstractViewController<Node> {
   }
 
   private void removeTab(String playerOrChannelName) {
-    nameToChatTabController.remove(playerOrChannelName);
-
     if (nameToChatTabController.containsKey(playerOrChannelName)) {
       tabPane.getTabs().remove(nameToChatTabController.remove(playerOrChannelName).getRoot());
     }
@@ -241,7 +239,9 @@ public class ChatController extends AbstractViewController<Node> {
     super.onDisplay(navigateEvent);
     if (!tabPane.getTabs().isEmpty()) {
       Tab tab = tabPane.getSelectionModel().getSelectedItem();
-      nameToChatTabController.get(tab.getId()).onDisplay();
+      if (tab != null) {
+        nameToChatTabController.get(tab.getId()).onDisplay();
+      }
     }
   }
 
