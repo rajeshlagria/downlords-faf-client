@@ -361,7 +361,7 @@ public class ChatUserItemController implements Controller<Node> {
   }
 
   public void onMouseEnteredClanTag() {
-    clanService.getClanByTag(player.getClan()).thenAccept(optionalClan -> {
+    clanService.getClanByTag(player.getClan()).thenAccept(optionalClan -> Platform.runLater(() -> {
       if (!optionalClan.isPresent()) {
         return;
       }
@@ -395,6 +395,6 @@ public class ChatUserItemController implements Controller<Node> {
       clanMenu.setTooltip(clanTooltip);
       clanTooltip.show(StageHolder.getStage());
 
-    });
+    }));
   }
 }
