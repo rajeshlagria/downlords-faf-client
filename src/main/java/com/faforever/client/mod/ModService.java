@@ -163,7 +163,7 @@ public class ModService {
     return thread;
   }
 
-  
+
   public void loadInstalledMods() {
     try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(modsDirectory, entry -> Files.isDirectory(entry))) {
       for (Path path : directoryStream) {
@@ -174,13 +174,13 @@ public class ModService {
     }
   }
 
-  
+
   public ObservableList<ModVersion> getInstalledModVersions() {
     return readOnlyInstalledModVersions;
   }
 
   @SneakyThrows
-  
+
   public CompletableFuture<Void> downloadAndInstallMod(String uid) {
     return fafService.getModVersion(uid)
         .thenCompose(mod -> downloadAndInstallMod(mod, null, null))
@@ -190,12 +190,12 @@ public class ModService {
         });
   }
 
-  
+
   public CompletableFuture<Void> downloadAndInstallMod(URL url) {
     return downloadAndInstallMod(url, null, null);
   }
 
-  
+
   public CompletableFuture<Void> downloadAndInstallMod(URL url, @Nullable DoubleProperty progressProperty, @Nullable StringProperty titleProperty) {
     InstallModTask task = applicationContext.getBean(InstallModTask.class);
     task.setUrl(url);
@@ -210,19 +210,19 @@ public class ModService {
         .thenRun(this::loadInstalledMods);
   }
 
-  
+
   public CompletableFuture<Void> downloadAndInstallMod(ModVersion modVersion, @Nullable DoubleProperty progressProperty, StringProperty titleProperty) {
     return downloadAndInstallMod(modVersion.getDownloadUrl(), progressProperty, titleProperty);
   }
 
-  
+
   public Set<String> getInstalledModUids() {
     return getInstalledModVersions().stream()
         .map(ModVersion::getUid)
         .collect(Collectors.toSet());
   }
 
-  
+
   public Set<String> getInstalledUiModsUids() {
     return getInstalledModVersions().stream()
         .filter(mod -> mod.getModType() == ModType.UI)
@@ -230,7 +230,7 @@ public class ModService {
         .collect(Collectors.toSet());
   }
 
-  
+
   public void enableSimMods(Set<String> simMods) throws IOException {
     Map<String, Boolean> modStates = readModStates();
 
@@ -251,19 +251,19 @@ public class ModService {
     writeModStates(modStates);
   }
 
-  
+
   public boolean isModInstalled(String uid) {
     return getInstalledModUids().contains(uid);
   }
 
-  
+
   public CompletableFuture<Void> uninstallMod(ModVersion modVersion) {
     UninstallModTask task = applicationContext.getBean(UninstallModTask.class);
     task.setModVersion(modVersion);
     return taskService.submitTask(task).getFuture();
   }
 
-  
+
   public Path getPathForMod(ModVersion modVersionToFind) {
     return pathToMod.entrySet().stream()
         .filter(pathModEntry -> pathModEntry.getValue().getUid().equals(modVersionToFind.getUid()))
@@ -272,13 +272,13 @@ public class ModService {
         .orElse(null);
   }
 
-  
+
   public CompletableFuture<List<ModVersion>> getNewestMods(int count, int page) {
     return findByQuery(new SearchConfig(new SortConfig(SearchableProperties.NEWEST_MOD_KEY, SortOrder.DESC), ""), page, count);
   }
 
   @NotNull
-  
+
   @SneakyThrows
   public ModVersion extractModInfo(Path path) {
     Path modInfoLua = path.resolve("mod_info.lua");
@@ -293,12 +293,12 @@ public class ModService {
   }
 
   @NotNull
-  
+
   public ModVersion extractModInfo(InputStream inputStream, Path basePath) {
     return ModVersion.fromModInfo(modReader.readModInfo(inputStream, basePath), basePath);
   }
 
-  
+
   public CompletableTask<Void> uploadMod(Path modPath) {
     ModUploadTask modUploadTask = applicationContext.getBean(ModUploadTask.class);
     modUploadTask.setModPath(modPath);
@@ -306,14 +306,14 @@ public class ModService {
     return taskService.submitTask(modUploadTask);
   }
 
-  
+
   public Image loadThumbnail(ModVersion modVersion) {
     //FIXME: reintroduce correct caching
     URL url = modVersion.getThumbnailUrl();
     return assetService.loadAndCacheImage(url, Paths.get("mods"), () -> IdenticonUtil.createIdenticon(modVersion.getDisplayName()));
   }
 
-  
+
   public void evictModsCache() {
     fafService.evictModsCache();
   }
@@ -321,7 +321,7 @@ public class ModService {
   /**
    * Returns the download size of the specified modVersion in bytes.
    */
-  
+
   @SneakyThrows
   public long getModSize(ModVersion modVersion) {
     HttpURLConnection conn = null;
@@ -336,17 +336,17 @@ public class ModService {
     }
   }
 
-  
+
   public ComparableVersion readModVersion(Path modDirectory) {
     return extractModInfo(modDirectory).getVersion();
   }
 
-  
+
   public CompletableFuture<List<FeaturedMod>> getFeaturedMods() {
     return fafService.getFeaturedMods();
   }
 
-  
+
   public CompletableFuture<FeaturedMod> getFeaturedMod(String featuredMod) {
     return getFeaturedMods().thenCompose(featuredModBeans -> completedFuture(featuredModBeans.stream()
         .filter(mod -> featuredMod.equals(mod.getTechnicalName()))
@@ -355,29 +355,28 @@ public class ModService {
     ));
   }
 
-  
+
   public CompletableFuture<List<ModVersion>> findByQuery(SearchConfig searchConfig, int page, int count) {
     return fafService.findModsByQuery(searchConfig, page, count);
   }
 
-  
-  @CacheEvict(CacheNames.MODS)
+  @CacheEvict(value = CacheNames.MODS, allEntries = true)
   public void evictCache() {
     // Nothing to see here
   }
 
-  
+
   @Async
   public CompletableFuture<List<ModVersion>> getHighestRatedUiMods(int count, int page) {
     return fafService.findModsByQuery(new SearchConfig(new SortConfig(SearchableProperties.HIGHEST_RATED_MOD_KEY, SortOrder.DESC), "latestVersion.type==UI"), page, count);
   }
 
-  
+
   public CompletableFuture<List<ModVersion>> getHighestRatedMods(int count, int page) {
     return fafService.findModsByQuery(new SearchConfig(new SortConfig(SearchableProperties.HIGHEST_RATED_MOD_KEY, SortOrder.DESC), ""), page, count);
   }
 
-  
+
   public List<ModVersion> getActivatedSimAndUIMods() throws IOException {
     Map<String, Boolean> modStates = readModStates();
     return getInstalledModVersions().parallelStream()
@@ -385,7 +384,7 @@ public class ModService {
         .collect(Collectors.toList());
   }
 
-  
+
   public void overrideActivatedMods(List<ModVersion> modVersions) throws IOException {
     Map<String, Boolean> modStates = modVersions.parallelStream().collect(Collectors.toMap(ModVersion::getUid, o -> true));
     writeModStates(modStates);

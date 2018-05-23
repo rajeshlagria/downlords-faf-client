@@ -11,6 +11,8 @@ import com.faforever.client.notification.DismissAction;
 import com.faforever.client.notification.ImmediateNotification;
 import com.faforever.client.notification.NotificationService;
 import com.faforever.client.notification.Severity;
+import com.faforever.client.player.Player;
+import com.faforever.client.player.PlayerService;
 import com.faforever.client.preferences.PreferencesService;
 import com.faforever.client.query.SearchableProperties;
 import com.faforever.client.theme.UiService;
@@ -26,6 +28,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
@@ -46,6 +49,7 @@ import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -75,6 +79,7 @@ public class MapVaultController extends AbstractViewController<Node> {
   private final UiService uiService;
   private final NotificationService notificationService;
   private final ObjectProperty<State> state;
+  private final PlayerService playerService;
   public Pane searchResultGroup;
   public Pane searchResultPane;
   public Pane showroomGroup;
@@ -88,6 +93,9 @@ public class MapVaultController extends AbstractViewController<Node> {
   public SearchController searchController;
   public Button moreButton;
   public FlowPane ladderPane;
+  public FlowPane ownedPane;
+  public Label ownedMoreLabel;
+  public Button ownedMoreButton;
   private MapDetailController mapDetailController;
   private String query;
   private int currentPage;
@@ -96,13 +104,14 @@ public class MapVaultController extends AbstractViewController<Node> {
 
   @Inject
   public MapVaultController(MapService mapService, I18n i18n, EventBus eventBus, PreferencesService preferencesService,
-                            UiService uiService, NotificationService notificationService) {
+                            UiService uiService, NotificationService notificationService, PlayerService playerService) {
     this.mapService = mapService;
     this.i18n = i18n;
     this.eventBus = eventBus;
     this.preferencesService = preferencesService;
     this.uiService = uiService;
     this.notificationService = notificationService;
+    this.playerService = playerService;
 
     state = new SimpleObjectProperty<>(State.UNINITIALIZED);
   }
@@ -157,6 +166,21 @@ public class MapVaultController extends AbstractViewController<Node> {
         .thenCompose(aVoid -> mapService.getHighestRatedMaps(TOP_ELEMENT_COUNT, 1)).thenAccept(maps -> replaceSearchResult(maps, mostLikedPane))
         .thenCompose(aVoid -> mapService.getNewestMaps(TOP_ELEMENT_COUNT, 1)).thenAccept(maps -> replaceSearchResult(maps, newestPane))
         .thenCompose(aVoid -> mapService.getLadderMaps(TOP_ELEMENT_COUNT, 1).thenAccept(maps -> replaceSearchResult(maps, ladderPane)))
+        .thenCompose(aVoid -> {
+          Optional<Player> currentPlayer = playerService.getCurrentPlayer();
+          if (!currentPlayer.isPresent()) {
+            throw new IllegalStateException("Current Player not set");
+          }
+          return mapService.getOwnedMaps(currentPlayer.get().getId(), TOP_ELEMENT_COUNT, 1);
+        })
+        .thenAccept(mapBeans -> {
+          if (mapBeans.isEmpty()) {
+            ownedPane.setVisible(false);
+            ownedMoreButton.setVisible(false);
+            ownedMoreLabel.setVisible(false);
+          }
+          replaceSearchResult(mapBeans, ownedPane);
+        })
         .thenRun(this::enterShowroomState)
         .exceptionally(throwable -> {
           logger.warn("Could not populate maps", throwable);
@@ -275,6 +299,15 @@ public class MapVaultController extends AbstractViewController<Node> {
   public void showMoreLadderdMaps() {
     enterLoadingState();
     displayMapsFromSupplier(() -> mapService.getLadderMaps(LOAD_MORE_COUNT, ++currentPage));
+  }
+
+  public void showMoreOwnedMaps() {
+    enterLoadingState();
+    Optional<Player> currentPlayer = playerService.getCurrentPlayer();
+    if (!currentPlayer.isPresent()) {
+      throw new IllegalStateException("Current player was null");
+    }
+    displayMapsFromSupplier(() -> mapService.getOwnedMaps(currentPlayer.get().getId(), LOAD_MORE_COUNT, ++currentPage));
   }
 
   private void appendSearchResult(List<MapBean> maps, Pane pane) {
