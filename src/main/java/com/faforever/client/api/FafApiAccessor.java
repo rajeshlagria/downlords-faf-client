@@ -17,6 +17,7 @@ import com.faforever.client.api.dto.MapVersionReview;
 import com.faforever.client.api.dto.Mod;
 import com.faforever.client.api.dto.ModVersion;
 import com.faforever.client.api.dto.ModVersionReview;
+import com.faforever.client.api.dto.Player;
 import com.faforever.client.api.dto.PlayerAchievement;
 import com.faforever.client.api.dto.PlayerEvent;
 import com.faforever.client.game.KnownFeaturedMod;
@@ -121,4 +122,6 @@ public interface FafApiAccessor {
   List<Mod> findModsByQuery(SearchConfig query, int page, int maxResults);
 
   List<Ladder1v1Map> getLadder1v1Maps(int count, int page);
+
+  Player getOwnPlayer();
 }
