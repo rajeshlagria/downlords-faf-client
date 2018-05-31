@@ -1,9 +1,9 @@
 language: java
 
-sudo: false
-
 jdk:
-  - oraclejdk8
+- oraclejdk10
+
+sudo: false
 
 install: true
 
@@ -22,10 +22,6 @@ env:
    - secure: "UVIbeoJpx9n0KSWHbpdWZuR4zeZfXw3JQBq2Zb1h0/j4uREfXWiGFuNVQBPjsdtYi2+LkecjJ/MgKWo+SS0SjsvTa/ZPkOXt4408H1qYgwVnvWoeL/g1QQ6T8ADNysl/4ZtJLnSp0WXYEBkfHYZJD++vgDwkpVhnCLVzSFVAHls="
 
 addons:
-  apt:
-    packages:
-      - oracle-java8-installer
-
   coverity_scan:
     project:
       name: "micheljung/downlords-faf-client"

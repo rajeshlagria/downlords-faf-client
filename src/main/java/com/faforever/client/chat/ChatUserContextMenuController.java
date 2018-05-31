@@ -48,6 +48,7 @@ import org.springframework.stereotype.Component;
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.faforever.client.chat.ChatColorMode.CUSTOM;
 import static com.faforever.client.fx.WindowController.WindowButtonType.CLOSE;
@@ -94,6 +95,7 @@ public class ChatUserContextMenuController implements Controller<ContextMenu> {
 
   @SuppressWarnings("FieldCanBeLocal")
   private ChangeListener<Player> playerChangeListener;
+  private Optional<Runnable> onSocialStatusChangedListener;
 
   public ChatUserContextMenuController(PreferencesService preferencesService,
                                        PlayerService playerService, ReplayService replayService,
@@ -193,7 +195,7 @@ public class ChatUserContextMenuController implements Controller<ContextMenu> {
           .and(newValue.statusProperty().isNotEqualTo(PlayerStatus.PLAYING)));
     };
     JavaFxUtil.addListener(chatUser.playerProperty(), new WeakChangeListener<>(playerChangeListener));
-
+    playerChangeListener.changed(chatUser.playerProperty(), null, chatUser.getPlayer().orElse(null));
 
     socialSeparator.visibleProperty().bind(addFriendItem.visibleProperty().or(
         removeFriendItem.visibleProperty().or(
@@ -255,11 +257,13 @@ public class ChatUserContextMenuController implements Controller<ContextMenu> {
       playerService.removeFoe(player);
     }
     playerService.addFriend(player);
+    onSocialStatusChangedListener.ifPresent(Runnable::run);
   }
 
   public void onRemoveFriendSelected() {
     Player player = getPlayer();
     playerService.removeFriend(player);
+    onSocialStatusChangedListener.ifPresent(Runnable::run);
   }
 
   public void onAddFoeSelected() {
@@ -268,11 +272,13 @@ public class ChatUserContextMenuController implements Controller<ContextMenu> {
       playerService.removeFriend(player);
     }
     playerService.addFoe(player);
+    onSocialStatusChangedListener.ifPresent(Runnable::run);
   }
 
   public void onRemoveFoeSelected() {
     Player player = getPlayer();
     playerService.removeFoe(player);
+    onSocialStatusChangedListener.ifPresent(Runnable::run);
   }
 
   public void onWatchGameSelected() {
@@ -320,5 +326,9 @@ public class ChatUserContextMenuController implements Controller<ContextMenu> {
   @Override
   public ContextMenu getRoot() {
     return chatUserContextMenuRoot;
+  }
+
+  void setOnSocialStatusChangedListener(Optional<Runnable> onSocialStatusChangedListener) {
+    this.onSocialStatusChangedListener = onSocialStatusChangedListener;
   }
 }

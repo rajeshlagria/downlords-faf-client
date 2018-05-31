@@ -1,11 +1,13 @@
 package com.faforever.client.chat;
 
 import com.faforever.client.fx.JavaFxUtil;
+import javafx.beans.property.ReadOnlySetWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,10 +18,12 @@ public class Channel {
   private final ObservableMap<String, ChatChannelUser> users;
   private final StringProperty topic;
   private String name;
+  private ObservableSet<String> moderators;
 
   public Channel(String name) {
     this.name = name;
     users = FXCollections.synchronizedObservableMap(FXCollections.observableHashMap());
+    moderators = FXCollections.observableSet();
     topic = new SimpleStringProperty();
   }
 
@@ -35,8 +39,8 @@ public class Channel {
     return topic;
   }
 
-  public void removeUser(String username) {
-    users.remove(username);
+  public ChatChannelUser removeUser(String username) {
+    return users.remove(username);
   }
 
   public void addUsers(List<ChatChannelUser> users) {
@@ -60,10 +64,11 @@ public class Channel {
   }
 
   public void addModerator(String username) {
-    ChatChannelUser chatUser = users.get(username);
-    if (chatUser != null) {
-      chatUser.setModerator(true);
-    }
+    moderators.add(username);
+  }
+
+  public ReadOnlySetWrapper<String> getModerators() {
+    return new ReadOnlySetWrapper<>(moderators);
   }
 
   /**

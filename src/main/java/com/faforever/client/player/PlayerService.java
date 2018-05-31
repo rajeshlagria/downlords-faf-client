@@ -19,6 +19,7 @@ import com.faforever.client.user.event.LoginSuccessEvent;
 import com.faforever.client.util.Assert;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -232,7 +233,10 @@ public class PlayerService {
   public void onChatUserJoinedChannel(ChatUserJoinedChannelEvent event) {
     ChatChannelUser chatChannelUser = event.getChatChannelUser();
     Optional.ofNullable(playersByName.get(chatChannelUser.getUsername()))
-        .ifPresent(player -> player.getChatChannelUsers().add(chatChannelUser));
+        .ifPresent(player -> Platform.runLater(() -> {
+          chatChannelUser.setPlayer(player);
+          player.getChatChannelUsers().add(chatChannelUser);
+        }));
   }
 
   private void onPlayersInfo(PlayersMessage playersMessage) {

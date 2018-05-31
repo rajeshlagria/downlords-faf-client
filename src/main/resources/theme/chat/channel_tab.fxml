@@ -2,12 +2,12 @@
 
 <?import com.jfoenix.controls.JFXButton?>
 <?import com.jfoenix.controls.JFXTextField?>
+<?import com.jfoenix.controls.JFXTreeTableColumn?>
+<?import com.jfoenix.controls.JFXTreeTableView?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.ToggleButton?>
-<?import javafx.scene.control.TreeTableColumn?>
-<?import javafx.scene.control.TreeTableView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -45,16 +45,20 @@
                            <Insets left="10.0" />
                         </VBox.margin>
               </HBox>
-                <TreeTableView fx:id="chatUserTableView" maxHeight="1.7976931348623157E308"
-                               maxWidth="1.7976931348623157E308" showRoot="false" VBox.vgrow="ALWAYS">
-                    <columns>
-                        <TreeTableColumn fx:id="chatUserColumn" editable="false" prefWidth="-1.0" resizable="false"
-                                         sortable="false" text="User"/>
-                    </columns>
-                    <columnResizePolicy>
-                        <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-                    </columnResizePolicy>
-                </TreeTableView>
+                <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                    <children>
+                        <JFXTreeTableView fx:id="chatUserTableView" maxHeight="1.7976931348623157E308"
+                                          maxWidth="1.7976931348623157E308" styleClass="invisible-selection"
+                                          AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                                          AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                            <columns>
+                                <JFXTreeTableColumn fx:id="chatUserColumn" editable="false"
+                                                    maxWidth="1.7976931348623157E308" minWidth="260.0" prefWidth="260.0"
+                                                    resizable="false"/>
+                            </columns>
+                        </JFXTreeTableView>
+                    </children>
+                </AnchorPane>
             </children>
           </VBox>
         </items>
