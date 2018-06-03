@@ -526,7 +526,7 @@ public class MainController implements Controller<Node> {
 
     @Override
     public void invalidated(Observable observable) {
-      boolean enabled = preferencesService.getPreferences().getNotification().isTransientNotificationsEnabled();
+      boolean enabled = preferencesService.getPreferences().getNotification().getEventNotificationsEnabled();
       if (transientNotificationsController.getRoot().getChildren().isEmpty() || !enabled) {
         transientNotificationsPopup.hide();
         return;

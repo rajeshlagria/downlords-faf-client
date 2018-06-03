@@ -100,6 +100,7 @@ public class SettingsController implements Controller<Node> {
   public CheckBox displayPmReceivedToastCheckBox;
   public CheckBox displayLadder1v1ToastCheckBox;
   public CheckBox playPmReceivedSoundCheckBox;
+  public CheckBox afterGameReviewCheckBox;
   public Region settingsRoot;
   public ComboBox<Theme> themeComboBox;
   public Toggle rememberLastTabToggle;
@@ -196,7 +197,7 @@ public class SettingsController implements Controller<Node> {
 
     JavaFxUtil.bindBidirectional(maxMessagesTextField.textProperty(), preferences.getChat().maxMessagesProperty(), new NumberStringConverter(integerNumberFormat));
     imagePreviewToggle.selectedProperty().bindBidirectional(preferences.getChat().previewImageUrlsProperty());
-    enableNotificationsToggle.selectedProperty().bindBidirectional(preferences.getNotification().transientNotificationsEnabledProperty());
+    enableNotificationsToggle.selectedProperty().bindBidirectional(preferences.getNotification().eventNotificationsEnabledProperty());
 
     hideFoeToggle.selectedProperty().bindBidirectional(preferences.getChat().hideFoeMessagesProperty());
 
@@ -252,6 +253,7 @@ public class SettingsController implements Controller<Node> {
     playFriendJoinsGameSoundCheckBox.selectedProperty().bindBidirectional(preferences.getNotification().friendJoinsGameSoundEnabledProperty());
     playFriendPlaysGameSoundCheckBox.selectedProperty().bindBidirectional(preferences.getNotification().friendPlaysGameSoundEnabledProperty());
     playPmReceivedSoundCheckBox.selectedProperty().bindBidirectional(preferences.getNotification().privateMessageSoundEnabledProperty());
+    afterGameReviewCheckBox.selectedProperty().bindBidirectional(preferences.getNotification().afterGameReviewEnabledProperty());
 
     notifyOnAtMentionOnlyToggle.selectedProperty().bindBidirectional(preferences.getNotification().notifyOnAtMentionOnlyEnabledProperty());
     enableSoundsToggle.selectedProperty().bindBidirectional(preferences.getNotification().soundsEnabledProperty());
