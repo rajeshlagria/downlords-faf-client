@@ -10,7 +10,7 @@ import javafx.beans.property.SimpleObjectProperty;
 public class NotificationsPrefs {
 
   private final BooleanProperty soundsEnabled;
-  private final BooleanProperty transientNotificationsEnabled;
+  private final BooleanProperty eventNotificationsEnabled;
   private final BooleanProperty mentionSoundEnabled;
   private final BooleanProperty infoSoundEnabled;
   private final BooleanProperty warnSoundEnabled;
@@ -27,6 +27,7 @@ public class NotificationsPrefs {
   private final BooleanProperty privateMessageToastEnabled;
   private final BooleanProperty friendJoinsGameToastEnabled;
   private final BooleanProperty notifyOnAtMentionOnlyEnabled;
+  private final BooleanProperty afterGameReviewEnabled;
   private final ObjectProperty<ToastPosition> toastPosition;
   private final IntegerProperty toastScreen;
   private final IntegerProperty toastDisplayTime;
@@ -37,7 +38,7 @@ public class NotificationsPrefs {
     infoSoundEnabled = new SimpleBooleanProperty(true);
     warnSoundEnabled = new SimpleBooleanProperty(true);
     errorSoundEnabled = new SimpleBooleanProperty(true);
-    transientNotificationsEnabled = new SimpleBooleanProperty(true);
+    eventNotificationsEnabled = new SimpleBooleanProperty(true);
     toastPosition = new SimpleObjectProperty<>(ToastPosition.BOTTOM_RIGHT);
     friendOnlineToastEnabled = new SimpleBooleanProperty(true);
     friendOfflineToastEnabled = new SimpleBooleanProperty(true);
@@ -53,6 +54,7 @@ public class NotificationsPrefs {
     notifyOnAtMentionOnlyEnabled = new SimpleBooleanProperty(false);
     toastScreen = new SimpleIntegerProperty(0);
     toastDisplayTime = new SimpleIntegerProperty(5000);
+    afterGameReviewEnabled = new SimpleBooleanProperty(true);
   }
 
   public boolean isSoundsEnabled() {
@@ -67,16 +69,16 @@ public class NotificationsPrefs {
     return soundsEnabled;
   }
 
-  public boolean isTransientNotificationsEnabled() {
-    return transientNotificationsEnabled.get();
+  public boolean getEventNotificationsEnabled() {
+    return eventNotificationsEnabled.get();
   }
 
-  public void setTransientNotificationsEnabled(boolean transientNotificationsEnabled) {
-    this.transientNotificationsEnabled.set(transientNotificationsEnabled);
+  public void setEventNotificationsEnabled(boolean eventNotificationsEnabled) {
+    this.eventNotificationsEnabled.set(eventNotificationsEnabled);
   }
 
-  public BooleanProperty transientNotificationsEnabledProperty() {
-    return transientNotificationsEnabled;
+  public BooleanProperty eventNotificationsEnabledProperty() {
+    return eventNotificationsEnabled;
   }
 
   public boolean isMentionSoundEnabled() {
@@ -301,5 +303,17 @@ public class NotificationsPrefs {
 
   public BooleanProperty notifyOnAtMentionOnlyEnabledProperty() {
     return notifyOnAtMentionOnlyEnabled;
+  }
+
+  public boolean isAfterGameReviewEnabled() {
+    return afterGameReviewEnabled.get();
+  }
+
+  public void setAfterGameReviewEnabled(boolean afterGameReviewEnabled) {
+    this.afterGameReviewEnabled.set(afterGameReviewEnabled);
+  }
+
+  public BooleanProperty afterGameReviewEnabledProperty() {
+    return afterGameReviewEnabled;
   }
 }
