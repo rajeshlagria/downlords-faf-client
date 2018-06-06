@@ -9,6 +9,7 @@ import com.faforever.client.preferences.LoginPrefs;
 import com.faforever.client.preferences.PreferencesService;
 import com.faforever.client.user.UserService;
 import com.google.common.base.Strings;
+import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -54,6 +55,7 @@ public class LoginController implements Controller<Node> {
   public TextField replayServerHostField;
   public TextField replayServerPortField;
   public TextField apiBaseUrl;
+  public JFXButton serverStatusButton;
 
   @Inject
   public LoginController(UserService userService, PreferencesService preferencesService, PlatformService platformService, ClientProperties clientProperties) {
@@ -74,6 +76,9 @@ public class LoginController implements Controller<Node> {
 
     serverConfigPane.managedProperty().bind(serverConfigPane.visibleProperty());
     serverConfigPane.setVisible(false);
+
+    serverStatusButton.managedProperty().bind(serverStatusButton.visibleProperty());
+    serverStatusButton.setVisible(clientProperties.getStatusPageUrl() != null);
 
     serverHostField.setText(clientProperties.getServer().getHost());
     serverPortField.setText(String.valueOf(clientProperties.getServer().getPort()));
@@ -177,5 +182,13 @@ public class LoginController implements Controller<Node> {
     if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
       serverConfigPane.setVisible(true);
     }
+  }
+
+  public void seeServerStatus() {
+    String statusPageUrl = clientProperties.getStatusPageUrl();
+    if (statusPageUrl == null) {
+      return;
+    }
+    platformService.showDocument(statusPageUrl);
   }
 }

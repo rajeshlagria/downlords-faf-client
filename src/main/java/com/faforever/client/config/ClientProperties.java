@@ -23,6 +23,7 @@ public class ClientProperties {
   private UnitDatabase unitDatabase = new UnitDatabase();
   private Website website = new Website();
   private String translationProjectUrl;
+  private String statusPageUrl;
 
   @Data
   public static class News {
