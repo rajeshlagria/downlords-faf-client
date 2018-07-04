@@ -22,6 +22,7 @@ public class ClientProperties {
   private Api api = new Api();
   private UnitDatabase unitDatabase = new UnitDatabase();
   private Website website = new Website();
+  private final DiscordConfig discordConfig = new DiscordConfig();
   private String translationProjectUrl;
 
   @Data
@@ -134,5 +135,10 @@ public class ClientProperties {
   public static class UnitDatabase {
     private String spookiesUrl;
     private String rackOversUrl;
+  }
+
+  @Data
+  public static class DiscordConfig {
+    private String applicationId;
   }
 }

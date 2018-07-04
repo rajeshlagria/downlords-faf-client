@@ -154,7 +154,6 @@ public class OnlineReplayVaultController extends AbstractViewController<Node> {
     if (state.get() == State.UNINITIALIZED) {
       if (navigateEvent instanceof ShowReplayEvent) {
         state.addListener(new ChangeListener<State>() {
-          @Override
           public void changed(ObservableValue<? extends State> observable, State oldValue, State newValue) {
             if (newValue != State.UNINITIALIZED) {
               Platform.runLater(() -> onShowReplayDetail(((ShowReplayEvent) navigateEvent).getReplay()));

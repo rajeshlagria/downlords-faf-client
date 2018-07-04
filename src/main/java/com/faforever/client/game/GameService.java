@@ -1,6 +1,7 @@
 package com.faforever.client.game;
 
 import com.faforever.client.config.ClientProperties;
+import com.faforever.client.discord.DiscordRichPresenceService;
 import com.faforever.client.fa.ForgedAllianceService;
 import com.faforever.client.fa.RatingMode;
 import com.faforever.client.fa.relay.event.RehostRequestEvent;
@@ -62,6 +63,7 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -122,6 +124,7 @@ public class GameService {
   private final ModService modService;
   private final PlatformService platformService;
   private final String faWindowTitle;
+  private final DiscordRichPresenceService discordRichPresenceService;
 
   //TODO: circular reference
   @Inject
@@ -140,7 +143,7 @@ public class GameService {
                      PreferencesService preferencesService, GameUpdater gameUpdater,
                      NotificationService notificationService, I18n i18n, Executor executor,
                      PlayerService playerService, ReportingService reportingService, EventBus eventBus,
-                     IceAdapter iceAdapter, ModService modService, PlatformService platformService) {
+                     IceAdapter iceAdapter, ModService modService, PlatformService platformService, DiscordRichPresenceService discordRichPresenceService) {
     this.fafService = fafService;
     this.forgedAllianceService = forgedAllianceService;
     this.mapService = mapService;
@@ -155,6 +158,8 @@ public class GameService {
     this.iceAdapter = iceAdapter;
     this.modService = modService;
     this.platformService = platformService;
+    this.discordRichPresenceService = discordRichPresenceService;
+
 
     faWindowTitle = clientProperties.getForgedAlliance().getWindowTitle();
     uidToGameInfoBean = FXCollections.observableMap(new ConcurrentHashMap<>());
@@ -170,6 +175,7 @@ public class GameService {
       ChangeListener<GameStatus> currentGameEndedListener = new ChangeListener<GameStatus>() {
         @Override
         public void changed(ObservableValue<? extends GameStatus> observable1, GameStatus oldStatus, GameStatus newStatus) {
+          discordRichPresenceService.updatePlayedGameTo(currentGame.get());
           if (oldStatus == GameStatus.PLAYING && newStatus == GameStatus.CLOSED) {
             GameService.this.onCurrentGameEnded();
           }
@@ -209,6 +215,15 @@ public class GameService {
   }
 
   public CompletableFuture<Void> hostGame(NewGameInfo newGameInfo) {
+    Game game = new Game();
+    game.setId(1);
+    game.setTitle("test title");
+    game.setStartTime(Instant.now());
+    game.setStatus(GameStatus.PLAYING);
+    game.setNumPlayers(3);
+    game.setMaxPlayers(12);
+    game.setHost("axel12");
+    discordRichPresenceService.updatePlayedGameTo(game);
     if (isRunning()) {
       logger.debug("Game is running, ignoring host request");
       return completedFuture(null);

@@ -137,7 +137,7 @@ public class GameServiceTest extends AbstractPlainJavaFxTest {
 
     instance = new GameService(clientProperties, fafService, forgedAllianceService, mapService,
         preferencesService, gameUpdater, notificationService, i18n, executor, playerService,
-        reportingService, eventBus, iceAdapter, modService, platformService);
+        reportingService, eventBus, iceAdapter, modService, platformService, discordRichPresenceService);
     instance.replayService = replayService;
 
     Preferences preferences = new Preferences();
@@ -518,7 +518,7 @@ public class GameServiceTest extends AbstractPlainJavaFxTest {
     game.setId(123);
     game.setStatus(PLAYING);
 
-    when(replayService.findById(123)).thenReturn(CompletableFuture.completedFuture(Optional.empty()));
+    when(replayService.findById(123)).thenReturn(completedFuture(Optional.empty()));
 
     instance.currentGame.set(game);
 
