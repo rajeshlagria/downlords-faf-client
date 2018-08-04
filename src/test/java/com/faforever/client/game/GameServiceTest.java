@@ -1,6 +1,7 @@
 package com.faforever.client.game;
 
 import com.faforever.client.config.ClientProperties;
+import com.faforever.client.discord.DiscordRichPresenceService;
 import com.faforever.client.fa.ForgedAllianceService;
 import com.faforever.client.fa.RatingMode;
 import com.faforever.client.fa.relay.event.RehostRequestEvent;
@@ -123,6 +124,8 @@ public class GameServiceTest extends AbstractPlainJavaFxTest {
   private PlatformService platformService;
   @Mock
   private ExternalReplayInfoGenerator externalReplayInfoGenerator;
+  @Mock
+  private DiscordRichPresenceService discordRichPresenceService;
 
   @Captor
   private ArgumentCaptor<Consumer<GameInfoMessage>> gameInfoMessageListenerCaptor;
@@ -139,7 +142,7 @@ public class GameServiceTest extends AbstractPlainJavaFxTest {
 
     instance = new GameService(clientProperties, fafService, forgedAllianceService, mapService,
         preferencesService, gameUpdater, notificationService, i18n, executor, playerService,
-        reportingService, eventBus, iceAdapter, modService, platformService, externalReplayInfoGenerator);
+        reportingService, eventBus, iceAdapter, modService, platformService, externalReplayInfoGenerator, discordRichPresenceService);
     instance.replayService = replayService;
 
     Preferences preferences = new Preferences();
@@ -508,6 +511,7 @@ public class GameServiceTest extends AbstractPlainJavaFxTest {
 
     verify(notificationService, never()).addNotification(any(PersistentNotification.class));
 
+    game.setStatus(PLAYING);
     game.setStatus(CLOSED);
 
     WaitForAsyncUtils.waitForFxEvents();

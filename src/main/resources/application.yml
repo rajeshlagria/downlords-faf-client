@@ -26,6 +26,11 @@ faf-client:
 
   translation-project-url: https://poeditor.com/join/project/2oWfdaZQZj
 
+  discord_config:
+    application_id: 464069837237518357
+    small_image_key: faf_logo_small
+    big_image_key: faf_logo_big
+
 spring:
   profiles:
     active: ${CLIENT_PROFILE:prod}
