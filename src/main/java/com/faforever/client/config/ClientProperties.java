@@ -23,6 +23,7 @@ public class ClientProperties {
   private UnitDatabase unitDatabase = new UnitDatabase();
   private Website website = new Website();
   private String translationProjectUrl;
+  private BugsnagConfig bugsnagConfig = new BugsnagConfig();
 
   @Data
   public static class News {
@@ -30,6 +31,12 @@ public class ClientProperties {
      * URL to fetch the RSS news feed from.
      */
     private String feedUrl;
+  }
+
+  @Data
+  public static class BugsnagConfig {
+    private String token;
+    private int logLinesSent;
   }
 
   @Data
